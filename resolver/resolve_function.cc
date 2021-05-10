@@ -128,11 +128,18 @@ void Resolver::resolveFunctionBody(Ast::FunctionDeclaration *decl,
   // new we have a prepared scope, we can resolve statements in it.
   Ast::Statement *body = decl->body();
 
-  body->visit(overloaded{
-      [&](Ast::StGroup &group) { resolveStatementGroup(group, functionScope); },
-      [](auto) {
-        throw std::logic_error("Function body must be a statement group");
-      }});
+  body->visit(overloaded{//
+                         [&](Ast::StGroup &group) {
+                           StatementContext ctx;
+                           ctx.function = decl->info();
+                           ctx.location = decl->token()->location;
+                           ctx.scope = functionScope;
+                           resolveGroup(group, ctx);
+                         },
+                         [](auto) {
+                           throw std::logic_error(
+                               "Function body must be a statement group");
+                         }});
 }
 
 } // namespace Cougar::Resolver

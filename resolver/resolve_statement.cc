@@ -13,13 +13,73 @@ using namespace Ast;
 using namespace Meta;
 using namespace Utils;
 
-void Resolver::resolveStatementGroup(StGroup &grp, Meta::Scope *groupScope) {
+Resolver::ControlFlowInfo
+Resolver::resolveStatement(StGroup &grp, const StatementContext &ctx) {
 
   assert(!grp.scope);
-  grp.scope = groupScope;
-  for (Statement *stmt : grp.statements) {
-    resolveStatement(stmt, groupScope);
+
+  StatementContext groupCtx = ctx;
+  groupCtx.scope = Zone::make<Scope>("", ctx.scope);
+  return resolveGroup(grp, groupCtx);
+}
+
+Resolver::ControlFlowInfo
+Resolver::resolveStatement(StReturn &ret, const StatementContext &ctx) {
+
+  if (ret.expression) {
+    resolveExpression(ret.expression, ctx.scope);
+    // check if return type matches function type
+    TypeInfo *returnedType = ret.expression->type();
+    TypeInfo *expectedReturnType = ctx.function->returnType;
+    if (returnedType && expectedReturnType) {
+      if (returnedType != expectedReturnType) {
+        mDiag.error(
+            ctx.location,
+            "Returning expression of type '{}' from function returning '{}'",
+            returnedType->prettyName(), expectedReturnType->prettyName());
+      }
+    }
+
+  } else {
+    // TODO support void functions
+    mDiag.error(ctx.location, "Function must return value");
   }
+
+  ControlFlowInfo cf;
+  cf.returns = true;
+  return cf;
+}
+
+Resolver::ControlFlowInfo Resolver::resolveGroup(Ast::StGroup &group,
+                                                 const StatementContext &ctx) {
+
+  StatementContext statementCtx = ctx;
+
+  bool unreachable = false;
+  bool unreachableReported = false;
+
+  ControlFlowInfo controlFlow;
+  ControlFlowInfo lastStatementCf;
+  for (Ast::Statement *stmt : group.statements) {
+    statementCtx.location = stmt->token()->location;
+
+    // is this statement unreachable?
+    if (unreachable && !unreachableReported) {
+      unreachableReported = true;
+      mDiag.error(statementCtx.location, "Statement(s) unreachable");
+    }
+
+    lastStatementCf = resolveStatement(stmt, statementCtx);
+
+    if (!lastStatementCf.fallsTrough)
+      unreachable = true;
+
+    controlFlow.returns |= lastStatementCf.returns;
+  }
+
+  controlFlow.fallsTrough = !unreachable;
+
+  return controlFlow;
 }
 
 Meta::FunctionInfo *Resolver::resolveNamedFunction(std::string_view name,
@@ -37,19 +97,22 @@ Meta::FunctionInfo *Resolver::resolveNamedFunction(std::string_view name,
   return nullptr;
 }
 
-void Resolver::resolveFunctionCall(const Utils::SourceLocation &loc,
-                                   StFunctionCall &stmt, Meta::Scope *scope) {
+Resolver::ControlFlowInfo
+Resolver::resolveStatement(StFunctionCall &stmt, const StatementContext &ctx) {
+
+  Resolver::ControlFlowInfo cf;
+  cf.fallsTrough = true;
 
   // - resolve arguments
   for (Expression *e : stmt.params->params()) {
-    resolveExpression(e, scope);
+    resolveExpression(e, ctx.scope);
   }
 
   // - find function by name
-  FunctionInfo *fi = resolveNamedFunction(stmt.name, scope);
+  FunctionInfo *fi = resolveNamedFunction(stmt.name, ctx.scope);
   if (!fi) {
-    mDiag.error(loc, "Unknown function '{}'", stmt.name);
-    return;
+    mDiag.error(ctx.location, "Unknown function '{}'", stmt.name);
+    return cf;
   }
 
   // TODO
@@ -63,42 +126,32 @@ void Resolver::resolveFunctionCall(const Utils::SourceLocation &loc,
   while (it1 != fi->args.end() && it2 != stmt.params->params().end()) {
     idx++;
     if (it1->type != (*it2)->type()) {
-      mDiag.error(loc, "Function call parameter type mismatch");
-      mDiag.error(loc, "Parameter #{} expects type '{}', got '{}'",
+      mDiag.error(ctx.location, "Function call parameter type mismatch");
+      mDiag.error(ctx.location, "Parameter #{} expects type '{}', got '{}'",
                   it1->type->prettyName(), (*it2)->type()->prettyName());
-      return;
+      return cf;
     }
     ++it1;
     ++it2;
   }
 
   if (it1 != fi->args.end()) {
-    mDiag.error(loc, "Too few paramters passed to function call");
-    return;
+    mDiag.error(ctx.location, "Too few paramters passed to function call");
+    return cf;
   } else if (it2 != stmt.params->params().end()) {
-    mDiag.error(loc, "Too many paramters passed to function call");
-    return;
+    mDiag.error(ctx.location, "Too many paramters passed to function call");
+    return cf;
   }
 
   stmt.info = fi;
+
+  return cf;
 }
 
-void Resolver::resolveStatement(Ast::Statement *stmt, Meta::Scope *scope) {
+Resolver::ControlFlowInfo
+Resolver::resolveStatement(Ast::Statement *stmt, const StatementContext &ctx) {
 
-  stmt->visit(overloaded{[&](StGroup &s) {
-                           // create new scope for the group
-                           Scope *groupScope = Zone::make<Scope>("", scope);
-                           resolveStatementGroup(s, groupScope);
-                         },
-                         [&](StFunctionCall &s) {
-                           resolveFunctionCall(stmt->token()->location, s,
-                                               scope);
-                         },
-                         [&](StReturn &r) {
-                           // TODO
-                           if (r.expression)
-                             resolveExpression(r.expression, scope);
-                         }});
+  return stmt->visit([&](auto &stmt) { return resolveStatement(stmt, ctx); });
 }
 
 } // namespace Cougar::Resolver

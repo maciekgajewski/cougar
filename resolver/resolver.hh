@@ -11,6 +11,7 @@ class TypeName;
 class Statement;
 struct StGroup;
 struct StFunctionCall;
+struct StReturn;
 
 class Expression;
 } // namespace Cougar::Ast
@@ -36,6 +37,17 @@ public:
   void resolveModule(Ast::Module *module);
 
 private:
+  struct ControlFlowInfo {
+    bool returns = false;
+    bool fallsTrough = false;
+  };
+
+  struct StatementContext {
+    Meta::Scope *scope = nullptr;
+    Meta::FunctionInfo *function = nullptr;
+    Utils::SourceLocation location;
+  };
+
   void resolveFunctionDelcaration(Ast::FunctionDeclaration *,
                                   Meta::Scope *scope);
   void resolveFunctionBody(Ast::FunctionDeclaration *, Meta::Scope *scope);
@@ -43,12 +55,19 @@ private:
   Meta::TypeInfo *resolveType(Ast::TypeNode *tn, Meta::Scope *scope);
   Meta::TypeInfo *resolveNamedType(std::string_view name, Meta::Scope *scope);
 
-  void resolveStatement(Ast::Statement *stmt, Meta::Scope *scope);
+  // statements
+  ControlFlowInfo resolveStatement(Ast::Statement *stmt,
+                                   const StatementContext &ctx);
 
-  void resolveStatementGroup(Ast::StGroup &stmt, Meta::Scope *groupScope);
-  void resolveFunctionCall(const Utils::SourceLocation &loc,
-                           Ast::StFunctionCall &stmt, Meta::Scope *scope);
+  ControlFlowInfo resolveStatement(Ast::StGroup &stmt,
+                                   const StatementContext &ctx);
+  ControlFlowInfo resolveStatement(Ast::StFunctionCall &stmt,
+                                   const StatementContext &ctx);
+  ControlFlowInfo resolveStatement(Ast::StReturn &stmt,
+                                   const StatementContext &ctx);
 
+  // statement helpers
+  ControlFlowInfo resolveGroup(Ast::StGroup &stmt, const StatementContext &ctx);
   Meta::FunctionInfo *resolveNamedFunction(std::string_view name,
                                            Meta::Scope *scope);
 
