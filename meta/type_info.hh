@@ -13,7 +13,7 @@ class Scope;
 
 class TypeInfo {
 public:
-  enum Flags { COMPILE_TIME = 1 };
+  enum Flags { COMPILE_TIME = 1, NUMERIC = 2 };
 
   struct Pointer {
     TypeInfo *pointed = nullptr;
@@ -23,7 +23,7 @@ public:
     std::string_view name;
   };
 
-  TypeInfo(Simple s, std::uint64_t flags = 0) : mData(s), mFlags(flags) {
+  TypeInfo(Simple s, std::uint64_t flags) : mData(s), mFlags(flags) {
     mPrettyName = s.name;
   }
   TypeInfo(Pointer p) : mData(p) {

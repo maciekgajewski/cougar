@@ -20,7 +20,7 @@ void Resolver::resolveExpression(Ast::Expression *e, Meta::Scope *scope) {
 
   e->visit(overloaded{
       [&](const ExStringLiteral &) { e->setType(BuiltIn::typeCStr); },
-      [&](const ExNumberLiteral &) { /* TODO */ }});
+      [&](const ExNumberLiteral &) { e->setType(BuiltIn::typeCtNumber); }});
 }
 
 } // namespace Cougar::Resolver

@@ -16,6 +16,8 @@ extern TypeInfo *typeInt16;
 extern TypeInfo *typeInt32;
 extern TypeInfo *typeInt64;
 
+extern TypeInfo *typeCtNumber;
+
 } // namespace BuiltIn
 
 } // namespace Cougar::Meta

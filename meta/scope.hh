@@ -15,18 +15,25 @@ class _built_in_tag;
 class Scope {
 public:
   Scope(std::string_view name, Scope *parent) : mName(name), mParent(parent) {
-    if (parent)
-      parent->mChildren.emplace(name, this);
+    // if (parent)
+    //   parent->mChildren.emplace(name, this);
+    // TODO do we?
   }
 
   Scope(const _built_in_tag &) { mIsBuiltIn = true; }
 
   void dump(int indent = 0) const;
 
-  TypeInfo *addType(TypeInfo::Simple s) { return mTypes.emplace(s.name, s); }
+  TypeInfo *addType(TypeInfo::Simple s, std::uint64_t flags) {
+    return mTypes.emplace(s.name, s, flags);
+  }
   TypeInfo *findType(std::string_view name) { return mTypes.find(name); }
 
   Scope *parent() { return mParent; }
+
+  Scope *addNamedChild(std::string_view name) {
+    return mNamedChildren.emplace(name, name, this);
+  }
 
   FunctionInfo *addFunction(std::string_view name) {
     return mFunctions.emplace(name, name);
@@ -51,7 +58,7 @@ private:
 
   Utils::Map<std::string_view, TypeInfo> mTypes;
   Utils::Map<std::string_view, FunctionInfo> mFunctions;
-  Utils::Map<std::string_view, Scope *> mChildren;
+  Utils::Map<std::string_view, Scope> mNamedChildren;
   Utils::Map<std::string_view, VariableInfo> mVariables;
 };
 

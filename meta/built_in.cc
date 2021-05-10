@@ -13,6 +13,7 @@ TypeInfo *typeInt8 = nullptr;
 TypeInfo *typeInt16 = nullptr;
 TypeInfo *typeInt32 = nullptr;
 TypeInfo *typeInt64 = nullptr;
+TypeInfo *typeCtNumber = nullptr;
 
 } // namespace BuiltIn
 
@@ -24,12 +25,23 @@ Scope *createBuiltInScope() {
 
   Scope *builtIn = Zone::make<Scope>(_built_in_tag{});
 
-  BuiltIn::typeInt8 = builtIn->addType(TypeInfo::Simple{"int8"});
-  BuiltIn::typeInt16 = builtIn->addType(TypeInfo::Simple{"int16"});
-  BuiltIn::typeInt32 = builtIn->addType(TypeInfo::Simple{"int32"});
-  BuiltIn::typeInt64 = builtIn->addType(TypeInfo::Simple{"int64"});
+  BuiltIn::typeInt8 =
+      builtIn->addType(TypeInfo::Simple{"int8"}, TypeInfo::NUMERIC);
+  BuiltIn::typeInt16 =
+      builtIn->addType(TypeInfo::Simple{"int16"}, TypeInfo::NUMERIC);
+  BuiltIn::typeInt32 =
+      builtIn->addType(TypeInfo::Simple{"int32"}, TypeInfo::NUMERIC);
+  BuiltIn::typeInt64 =
+      builtIn->addType(TypeInfo::Simple{"int64"}, TypeInfo::NUMERIC);
 
-  BuiltIn::typeCStr = builtIn->addType(TypeInfo::Simple{"cstr"});
+  BuiltIn::typeCStr = builtIn->addType(TypeInfo::Simple{"cstr"}, 0);
+
+  // compile-time
+
+  Scope *ct = builtIn->addNamedChild("ct");
+
+  BuiltIn::typeCtNumber = ct->addType(
+      TypeInfo::Simple{"number"}, TypeInfo::NUMERIC | TypeInfo::COMPILE_TIME);
 
   return builtIn;
 }

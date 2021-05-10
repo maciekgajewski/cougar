@@ -28,10 +28,10 @@ void Scope::dump(int indent) const {
         [&](const auto &, const FunctionInfo &i) { i.dump(indent + 6); });
   }
 
-  if (!mChildren.empty()) {
-    iprint(indent + 2, "- children");
-    mChildren.for_each(
-        [&](const auto &, const Scope *i) { i->dump(indent + 4); });
+  if (!mNamedChildren.empty()) {
+    iprint(indent + 2, "- named children");
+    mNamedChildren.for_each(
+        [&](const auto &, const Scope &i) { i.dump(indent + 4); });
   }
 }
 
