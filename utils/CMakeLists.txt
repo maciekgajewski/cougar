@@ -7,6 +7,7 @@ add_library(utils_lib
   diagnostics.hh diagnostics.cc
   map.hh map.cc
   iprint.hh iprint.cc
+  qualified_name.hh qualified_name.cc
 )
 
 target_include_directories(utils_lib INTERFACE ..)
