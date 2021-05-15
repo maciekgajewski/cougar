@@ -2,6 +2,7 @@
 
 #include "cookie.hh"
 
+#include "utils/qualified_name.hh"
 #include "utils/zone_allocator.hh"
 
 #include <string_view>
@@ -23,11 +24,11 @@ public:
     std::string_view name;
   };
 
-  TypeInfo(Simple s, std::uint64_t flags) : mData(s), mFlags(flags) {
-    mPrettyName = s.name;
-  }
+  TypeInfo(Simple s, std::uint64_t flags, Utils::Qualification q)
+      : mData(s), mFlags(flags), mName(s.name, q) {}
+
   TypeInfo(Pointer p) : mData(p) {
-    mPrettyName = Utils::Zone::format("{}*", p.pointed->prettyName());
+    mName.setName(Utils::Zone::format("{}*", p.pointed->prettyName()));
   }
 
   void dump(int indent) const;
@@ -37,7 +38,7 @@ public:
 
   bool isPointer() const { return std::holds_alternative<Pointer>(mData); }
 
-  std::string_view prettyName() const { return mPrettyName; }
+  const Utils::QualifiedName &prettyName() const { return mName; }
 
   Cookie codegenData;
 
@@ -48,8 +49,8 @@ public:
 private:
   std::variant<Pointer, Simple> mData;
   TypeInfo *mPointerType = nullptr;
-  std::string_view mPrettyName;
   std::uint64_t mFlags = 0;
+  Utils::QualifiedName mName;
 };
 
 } // namespace Cougar::Meta

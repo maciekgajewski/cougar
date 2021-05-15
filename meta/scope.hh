@@ -15,9 +15,10 @@ class _built_in_tag;
 class Scope {
 public:
   Scope(std::string_view name, Scope *parent) : mName(name), mParent(parent) {
-    // if (parent)
-    //   parent->mChildren.emplace(name, this);
-    // TODO do we?
+    if (!name.empty() && parent) {
+      mQualification = parent->mQualification;
+      mQualification.appendScope(name);
+    }
   }
 
   Scope(const _built_in_tag &) { mIsBuiltIn = true; }
@@ -25,8 +26,9 @@ public:
   void dump(int indent = 0) const;
 
   TypeInfo *addType(TypeInfo::Simple s, std::uint64_t flags) {
-    return mTypes.emplace(s.name, s, flags);
+    return mTypes.emplace(s.name, s, flags, mQualification);
   }
+
   TypeInfo *findType(std::string_view name) { return mTypes.find(name); }
 
   Scope *parent() { return mParent; }
@@ -60,6 +62,7 @@ private:
   Utils::Map<std::string_view, FunctionInfo> mFunctions;
   Utils::Map<std::string_view, Scope> mNamedChildren;
   Utils::Map<std::string_view, VariableInfo> mVariables;
+  Utils::Qualification mQualification;
 };
 
 } // namespace Cougar::Meta
