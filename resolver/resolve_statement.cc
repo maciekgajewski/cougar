@@ -33,10 +33,18 @@ Resolver::resolveStatement(StReturn &ret, const StatementContext &ctx) {
     TypeInfo *expectedReturnType = ctx.function->returnType;
     if (returnedType && expectedReturnType) {
       if (returnedType != expectedReturnType) {
-        mDiag.error(
-            ctx.location,
-            "Returning expression of type '{}' from function returning '{}'",
-            returnedType->prettyName(), expectedReturnType->prettyName());
+        if (returnedType->canImplicitlyCastTo(expectedReturnType)) {
+          // generate cast node
+          ret.expression =
+              createImplicitCast(ret.expression, expectedReturnType);
+        } else {
+          // cry me a river
+          mDiag.error(
+              ctx.location,
+              "Returning expression of type '{}' from function returning '{}', "
+              "nad there is not implicit cast availabale.",
+              returnedType->prettyName(), expectedReturnType->prettyName());
+        }
       }
     }
 

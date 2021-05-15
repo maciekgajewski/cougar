@@ -22,6 +22,10 @@ class TypeInfo;
 class FunctionInfo;
 } // namespace Cougar::Meta
 
+namespace Cougar::Lexer {
+class Token;
+}
+
 namespace Cougar::Resolver {
 
 // TODO move somwhere else
@@ -48,10 +52,12 @@ private:
     Utils::SourceLocation location;
   };
 
+  // functions
   void resolveFunctionDelcaration(Ast::FunctionDeclaration *,
                                   Meta::Scope *scope);
   void resolveFunctionBody(Ast::FunctionDeclaration *, Meta::Scope *scope);
 
+  // types
   Meta::TypeInfo *resolveType(Ast::TypeNode *tn, Meta::Scope *scope);
   Meta::TypeInfo *resolveNamedType(std::string_view name, Meta::Scope *scope);
 
@@ -71,7 +77,11 @@ private:
   Meta::FunctionInfo *resolveNamedFunction(std::string_view name,
                                            Meta::Scope *scope);
 
+  // expressions
   void resolveExpression(Ast::Expression *e, Meta::Scope *scope);
+
+  Ast::Expression *createImplicitCast(Ast::Expression *from,
+                                      Meta::TypeInfo *to);
 
   Utils::Diagnostics &mDiag;
   CompilationState &mState;

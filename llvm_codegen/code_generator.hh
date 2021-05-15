@@ -20,8 +20,11 @@ struct StGroup;
 struct StFunctionCall;
 struct StReturn;
 
+class Expression;
 struct ExStringLiteral;
 struct ExNumberLiteral;
+struct ExConstant;
+struct ExImplicitCast;
 
 } // namespace Cougar::Ast
 
@@ -57,8 +60,12 @@ private:
   void generateStatement(Ast::StReturn &);
 
   // expressions
+  llvm::Value *generateExpression(Ast::Expression *e);
+
   llvm::Value *generateExpression(Ast::ExStringLiteral &);
   llvm::Value *generateExpression(Ast::ExNumberLiteral &);
+  llvm::Value *generateExpression(Ast::ExImplicitCast &);
+  llvm::Value *generateExpression(Ast::ExConstant &);
 
   // types
   llvm::Type *simpleTypeToLlvm(std::string_view name);

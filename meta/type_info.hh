@@ -44,13 +44,27 @@ public:
 
   template <typename F> auto visit(F f) { return std::visit(f, mData); }
 
-  bool isCompileTime() const { return mFlags & COMPILE_TIME; }
+  bool isCompiletime() const { return mFlags & COMPILE_TIME; }
+  bool isRuntime() const { return !(mFlags & COMPILE_TIME); }
+
+  void addImpicitCastTo(TypeInfo *other) {
+    mImplicitlyCastsTo.emplace_back(other);
+  }
+
+  bool canImplicitlyCastTo(TypeInfo *other) const {
+    auto it =
+        std::find(mImplicitlyCastsTo.begin(), mImplicitlyCastsTo.end(), other);
+    return it != mImplicitlyCastsTo.end();
+  }
 
 private:
   std::variant<Pointer, Simple> mData;
   TypeInfo *mPointerType = nullptr;
   std::uint64_t mFlags = 0;
   Utils::QualifiedName mName;
+
+  // TODO implement Utils::Set
+  Utils::List<TypeInfo *> mImplicitlyCastsTo;
 };
 
 } // namespace Cougar::Meta

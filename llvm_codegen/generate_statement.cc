@@ -31,15 +31,20 @@ void CodeGenerator::generateStatement(Ast::StFunctionCall &stmt) {
 
   for (Ast::Expression *param : stmt.params->params()) {
 
-    args.push_back(
-        param->visit([&](auto &e) { return generateExpression(e); }));
+    args.push_back(generateExpression(param));
   }
 
   mBuilder->CreateCall(fun, args, llvm::Twine(stmt.name));
 }
 
-void CodeGenerator::generateStatement(Ast::StReturn &) {
-  // TODO
+void CodeGenerator::generateStatement(Ast::StReturn &retStmt) {
+  if (retStmt.expression) {
+    llvm::Value *retValue = nullptr;
+    retValue = generateExpression(retStmt.expression);
+    mBuilder->CreateRet(retValue);
+  } else {
+    mBuilder->CreateRetVoid();
+  }
 }
 
 } // namespace Cougar::LlvmCodeGenerator

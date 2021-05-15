@@ -2,12 +2,18 @@
 
 #include "ast/expression.hh"
 
+#include "meta/type_info.hh"
+
 #include <llvm/IR/GlobalVariable.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/Type.h>
 #include <llvm/IR/Value.h>
 
 namespace Cougar::LlvmCodeGenerator {
+
+llvm::Value *CodeGenerator::generateExpression(Ast::Expression *e) {
+  return e->visit([this](auto &data) { return generateExpression(data); });
+}
 
 llvm::Value *CodeGenerator::generateExpression(Ast::ExStringLiteral &strLit) {
 
@@ -34,6 +40,27 @@ llvm::Value *CodeGenerator::generateExpression(Ast::ExStringLiteral &strLit) {
 
 llvm::Value *CodeGenerator::generateExpression(Ast::ExNumberLiteral &) {
   throw std::logic_error("Unable to generate code for number literal");
+}
+
+llvm::Value *CodeGenerator::generateExpression(Ast::ExImplicitCast &) {
+  throw std::logic_error("Unable to generate code for implicit cast");
+}
+
+llvm::Value *CodeGenerator::generateExpression(Ast::ExConstant &c) {
+  assert(c.targetType);
+
+  llvm::Type *type = toLlvm(c.targetType);
+
+  if (type->isIntegerTy()) {
+    return llvm::ConstantInt::get(type, std::uint64_t(c.value),
+                                  type->isSingleValueType());
+  } else if (type->isFloatingPointTy()) {
+    return llvm::ConstantFP::get(*mContext, llvm::APFloat(c.value));
+  } else {
+    throw std::logic_error(
+        fmt::format("Unable to generate code for constant of type '{}'",
+                    c.targetType->prettyName()));
+  }
 }
 
 } // namespace Cougar::LlvmCodeGenerator

@@ -10,6 +10,8 @@ class TypeInfo;
 
 namespace Cougar::Ast {
 
+class Expression;
+
 struct ExStringLiteral {
   std::string_view content;
 };
@@ -18,12 +20,22 @@ struct ExNumberLiteral {
   std::string_view content;
 };
 
+struct ExImplicitCast {
+  Meta::TypeInfo *targetType = nullptr;
+  Expression *source = nullptr;
+};
+
+struct ExConstant {
+  Meta::TypeInfo *targetType = nullptr;
+  Expression *source = nullptr;
+
+  double value; // TODO use something more complex here
+};
+
 class Expression : public NodeOnToken {
 public:
-  Expression(const ExStringLiteral &d, const Lexer::Token *tok = nullptr)
-      : NodeOnToken(tok), mData(d) {}
-
-  Expression(const ExNumberLiteral &d, const Lexer::Token *tok = nullptr)
+  template <typename D>
+  Expression(const D &d, const Lexer::Token *tok = nullptr)
       : NodeOnToken(tok), mData(d) {}
 
   template <typename F> auto visit(F f) { return std::visit(f, mData); }
@@ -39,7 +51,8 @@ public:
 private:
   void doDump(int indent = 0) const override;
 
-  std::variant<ExStringLiteral, ExNumberLiteral> mData;
+  std::variant<ExStringLiteral, ExNumberLiteral, ExImplicitCast, ExConstant>
+      mData;
   Meta::TypeInfo *mType = nullptr;
 };
 

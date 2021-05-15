@@ -40,8 +40,14 @@ Scope *createBuiltInScope() {
 
   Scope *ct = builtIn->addNamedChild("ct");
 
+  // ct::number
   BuiltIn::typeCtNumber = ct->addType(
       TypeInfo::Simple{"number"}, TypeInfo::NUMERIC | TypeInfo::COMPILE_TIME);
+
+  BuiltIn::typeCtNumber->addImpicitCastTo(BuiltIn::typeInt8);
+  BuiltIn::typeCtNumber->addImpicitCastTo(BuiltIn::typeInt16);
+  BuiltIn::typeCtNumber->addImpicitCastTo(BuiltIn::typeInt32);
+  BuiltIn::typeCtNumber->addImpicitCastTo(BuiltIn::typeInt64);
 
   return builtIn;
 }

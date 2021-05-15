@@ -93,9 +93,9 @@ void CodeGenerator::generateFunction(Ast::FunctionDeclaration &funAST,
 
   // TODO hardcode return at the end
   // return argc
-  llvm::Value *argc = function->getArg(0);
-  // llvm::ReturnInst::Create(*mContext, argc, bb);
-  mBuilder->CreateRet(argc);
+  // llvm::Value *argc = function->getArg(0);
+  // // llvm::ReturnInst::Create(*mContext, argc, bb);
+  // mBuilder->CreateRet(argc);
 }
 
 void CodeGenerator::generateFunctionBody(llvm::Function *llvmFunction,
