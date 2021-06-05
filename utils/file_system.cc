@@ -19,4 +19,9 @@ std::string getBaseName(std::string_view path) {
   return p.stem().string();
 }
 
+void deleteFile(std::string_view path) {
+  bfs::path p(path.begin(), path.end());
+  bfs::remove(p);
+}
+
 } // namespace Cougar::Utils::FileSystem

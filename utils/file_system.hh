@@ -11,4 +11,6 @@ std::string generateTmpPath(std::string_view prefix, std::string_view suffix);
 // Returns base name, ie 'dir/file.ext' -> 'file'
 std::string getBaseName(std::string_view path);
 
+void deleteFile(std::string_view path);
+
 } // namespace Cougar::Utils::FileSystem

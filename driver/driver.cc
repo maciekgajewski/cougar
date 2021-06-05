@@ -181,25 +181,27 @@ void compileFile(std::string_view path, Phase stopAfter,
     throw std::runtime_error("Generated IR verification failed");
   }
 
-  std::string fileName;
+  std::string objectFile;
   if (stopAfter == Phase::Compile)
-    fileName = fmt::format("{}{}", baseFileName, toolchain.objectFileSuffix());
+    objectFile =
+        fmt::format("{}{}", baseFileName, toolchain.objectFileSuffix());
   else
-    fileName = Utils::FileSystem::generateTmpPath(
+    objectFile = Utils::FileSystem::generateTmpPath(
         fmt::format("cougar-{}", baseFileName), toolchain.objectFileSuffix());
 
-  codeGen.compile(llvmModule, fileName);
+  codeGen.compile(llvmModule, objectFile);
 
   if (stopAfter == Phase::Compile) {
-    fmt::print("Output written to {}\n", fileName);
+    fmt::print("Output written to {}\n", objectFile);
     return;
   }
-  fmt::print("Output written to {}\n", fileName);
+  fmt::print("Output written to {}\n", objectFile);
 
   std::string outputFile =
       fmt::format("{}{}", baseFileName, toolchain.executableSuffix());
 
-  toolchain.linkExecutable({fileName}, outputFile);
+  toolchain.linkExecutable({objectFile}, outputFile);
+  Utils::FileSystem::deleteFile(objectFile);
 }
 
 } // namespace
