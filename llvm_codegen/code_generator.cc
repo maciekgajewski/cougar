@@ -51,10 +51,9 @@ ModuleWrapper CodeGenerator::generate(Ast::Module &moduleAST) {
   return module;
 }
 
-void CodeGenerator::compile(ModuleWrapper &module) {
+void CodeGenerator::compile(ModuleWrapper &module, std::string_view fileName) {
 
   auto targetTriple = llvm::sys::getDefaultTargetTriple();
-  fmt::print("target triple: {}\n", targetTriple);
 
   // create compilation target
   llvm::InitializeAllTargetInfos();
@@ -87,13 +86,12 @@ void CodeGenerator::compile(ModuleWrapper &module) {
   module->setTargetTriple(targetTriple);
 
   // emit object code
-  auto filename = "output.o";
   std::error_code EC;
-  llvm::raw_fd_ostream dest(filename, EC, llvm::sys::fs::OF_None);
+  llvm::raw_fd_ostream dest(fileName, EC, llvm::sys::fs::OF_None);
 
   if (EC) {
     throw std::runtime_error(
-        fmt::format("Could not open file {}: {}", filename, EC.message()));
+        fmt::format("Could not open file {}: {}", fileName, EC.message()));
   }
 
   // define pass
@@ -106,10 +104,6 @@ void CodeGenerator::compile(ModuleWrapper &module) {
 
   pass.run(*module);
   dest.flush();
-
-  // TA-DA
-
-  fmt::print("Output written to {}\n", filename);
 }
 
 void CodeGenerator::dumpIR(ModuleWrapper &module) {

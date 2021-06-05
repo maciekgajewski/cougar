@@ -43,7 +43,7 @@ public:
 
   ModuleWrapper generate(Ast::Module &module);
 
-  void compile(ModuleWrapper &module);
+  void compile(ModuleWrapper &module, std::string_view fileName);
   void dumpIR(ModuleWrapper &module);
 
   // Verifies module, returns 'true' if ok

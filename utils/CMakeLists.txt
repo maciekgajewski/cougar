@@ -8,6 +8,7 @@ add_library(utils_lib
   map.hh map.cc
   iprint.hh iprint.cc
   qualified_name.hh qualified_name.cc
+  file_system.hh file_system.cc
 )
 
 target_include_directories(utils_lib INTERFACE ..)

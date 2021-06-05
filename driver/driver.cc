@@ -12,6 +12,7 @@
 #include "meta/built_in.hh"
 #include "meta/scope.hh"
 
+#include "utils/file_system.hh"
 #include "utils/zone_allocator.hh"
 
 #include <fmt/core.h>
@@ -175,9 +176,29 @@ void compileFile(std::string_view path, Phase stopAfter,
     throw std::runtime_error("Generated IR verification failed");
   }
 
-  codeGen.compile(llvmModule);
+  std::string fileName;
+  if (stopAfter == Phase::Compile)
+    fileName = "output.o";
+  else
+    fileName = Utils::FileSystem::generateTmpPath("/tmp/cougar-output", ".o");
+
+  codeGen.compile(llvmModule, fileName);
+
+  if (stopAfter == Phase::Compile) {
+    fmt::print("Output written to {}", fileName);
+    return;
+  }
 
   // TODO link
+  //
+  // Workign invocation:
+  //
+  // ld -z relro --eh-frame-hdr -m elf_x86_64  -dynamic-linker
+  // /lib64/ld-linux-x86-64.so.2 -o hwld output.o
+  // /usr/lib/x86_64-linux-gnu/crti.o /usr/lib/x86_64-linux-gnu/crt1.o
+  // /usr/lib/gcc/x86_64-linux-gnu/9/crtbegin.o -lc
+  // /usr/bin/../lib/gcc/x86_64-linux-gnu/9/crtend.o
+  // /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/crtn.o
 }
 
 } // namespace
