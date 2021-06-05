@@ -11,6 +11,8 @@ find_package(fmt CONFIG REQUIRED)
 #find_package(llvm REQUIRED)
 find_package(Threads REQUIRED)
 find_package(GTest CONFIG REQUIRED)
+find_package(Boost REQUIRED COMPONENTS filesystem)
+
 
 enable_testing()
 

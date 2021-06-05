@@ -1,3 +1,5 @@
+#include "toolchain_linux.hh"
+
 #include "llvm_codegen/code_generator.hh"
 
 #include "parser/parser.hh"
@@ -85,7 +87,8 @@ Args parseArgs(int argc, char **argv) {
 }
 
 void compileFile(std::string_view path, Phase stopAfter,
-                 Cougar::Meta::Scope *builtIn) {
+                 Cougar::Meta::Scope *builtIn,
+                 const Cougar::IToolchain &toolchain) {
 
   using namespace Cougar;
 
@@ -93,6 +96,8 @@ void compileFile(std::string_view path, Phase stopAfter,
 
   Utils::Diagnostics diag;
   diag.setPath(path);
+
+  std::string baseFileName = Utils::FileSystem::getBaseName(path);
 
   // Lex
   auto tokens = Lexer::lexFile(path);
@@ -178,27 +183,23 @@ void compileFile(std::string_view path, Phase stopAfter,
 
   std::string fileName;
   if (stopAfter == Phase::Compile)
-    fileName = "output.o";
+    fileName = fmt::format("{}{}", baseFileName, toolchain.objectFileSuffix());
   else
-    fileName = Utils::FileSystem::generateTmpPath("/tmp/cougar-output", ".o");
+    fileName = Utils::FileSystem::generateTmpPath(
+        fmt::format("cougar-{}", baseFileName), toolchain.objectFileSuffix());
 
   codeGen.compile(llvmModule, fileName);
 
   if (stopAfter == Phase::Compile) {
-    fmt::print("Output written to {}", fileName);
+    fmt::print("Output written to {}\n", fileName);
     return;
   }
+  fmt::print("Output written to {}\n", fileName);
 
-  // TODO link
-  //
-  // Workign invocation:
-  //
-  // ld -z relro --eh-frame-hdr -m elf_x86_64  -dynamic-linker
-  // /lib64/ld-linux-x86-64.so.2 -o hwld output.o
-  // /usr/lib/x86_64-linux-gnu/crti.o /usr/lib/x86_64-linux-gnu/crt1.o
-  // /usr/lib/gcc/x86_64-linux-gnu/9/crtbegin.o -lc
-  // /usr/bin/../lib/gcc/x86_64-linux-gnu/9/crtend.o
-  // /usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/crtn.o
+  std::string outputFile =
+      fmt::format("{}{}", baseFileName, toolchain.executableSuffix());
+
+  toolchain.linkExecutable({fileName}, outputFile);
 }
 
 } // namespace
@@ -215,8 +216,11 @@ int main(int argc, char **argv) {
     Cougar::Utils::ZoneAllocator commonZone;
     Cougar::Meta::Scope *builtIn = Cougar::Meta::createBuiltInScope();
 
+    // TODO use factory to create one, based on target triplet or whatnot
+    Cougar::ToolchainLinux toolchain;
+
     for (auto f : args.inputFiles) {
-      compileFile(f, args.stopAfter, builtIn);
+      compileFile(f, args.stopAfter, builtIn, toolchain);
     }
 
   } catch (const std::exception &e) {

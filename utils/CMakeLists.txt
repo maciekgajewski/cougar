@@ -14,6 +14,7 @@ add_library(utils_lib
 target_include_directories(utils_lib INTERFACE ..)
 
 target_link_libraries(utils_lib PRIVATE fmt::fmt)
+target_link_libraries(utils_lib PRIVATE Boost::boost Boost::filesystem)
 
 
 add_subdirectory(tests)

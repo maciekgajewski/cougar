@@ -1,27 +1,22 @@
 #include "file_system.hh"
 
+#include <boost/filesystem.hpp>
+
 #include <fmt/core.h>
-
-#include <cerrno>
-#include <cstring>
-
-#include <stdlib.h>
-#include <unistd.h>
 
 namespace Cougar::Utils::FileSystem {
 
+namespace bfs = boost::filesystem;
+
 std::string generateTmpPath(std::string_view prefix, std::string_view suffix) {
 
-  std::string tmp = fmt::format("{}XXXXXX{}", prefix, suffix);
+  std::string model = fmt::format("{}-%%%%-%%%%-%%%%-%%%%{}", prefix, suffix);
+  return (bfs::temp_directory_path() / bfs::unique_path(model)).string();
+}
 
-  int r = ::mkstemps(tmp.data(), suffix.size());
-  if (r < 0)
-    throw std::runtime_error(
-        fmt::format("mkstemps failed: {}", std::strerror(errno)));
-
-  ::close(r);
-
-  return tmp;
+std::string getBaseName(std::string_view path) {
+  bfs::path p(path.begin(), path.end());
+  return p.stem().string();
 }
 
 } // namespace Cougar::Utils::FileSystem
