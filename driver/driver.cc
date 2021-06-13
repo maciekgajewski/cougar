@@ -181,13 +181,17 @@ void compileFile(std::string_view path, Phase stopAfter,
     throw std::runtime_error("Generated IR verification failed");
   }
 
-  std::string objectFile;
-  if (stopAfter == Phase::Compile)
-    objectFile =
-        fmt::format("{}{}", baseFileName, toolchain.objectFileSuffix());
-  else
+  // executable or module?
+  bool buildExecutable = module->moduleName().empty();
+
+  std::string objectFile =
+      fmt::format("{}{}", baseFileName, toolchain.objectFileSuffix());
+
+  if (stopAfter == Phase::Compile || buildExecutable) {
+    // use temporary object file instead
     objectFile = Utils::FileSystem::generateTmpPath(
         fmt::format("cougar-{}", baseFileName), toolchain.objectFileSuffix());
+  }
 
   codeGen.compile(llvmModule, objectFile);
 
@@ -200,8 +204,14 @@ void compileFile(std::string_view path, Phase stopAfter,
   std::string outputFile =
       fmt::format("{}{}", baseFileName, toolchain.executableSuffix());
 
-  toolchain.linkExecutable({objectFile}, outputFile);
-  Utils::FileSystem::deleteFile(objectFile);
+  if (buildExecutable) {
+    toolchain.linkExecutable({objectFile}, outputFile);
+    Utils::FileSystem::deleteFile(objectFile);
+  } else {
+    std::string moduleInterfaceFile = fmt::format("{}.cmod.json", baseFileName);
+    module->generateInterface(moduleInterfaceFile);
+    fmt::print("Interface written to {}\n", moduleInterfaceFile);
+  }
 }
 
 } // namespace

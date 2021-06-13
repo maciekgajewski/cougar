@@ -9,6 +9,7 @@ add_library(utils_lib
   iprint.hh iprint.cc
   qualified_name.hh qualified_name.cc
   file_system.hh file_system.cc
+  text_sink.hh text_sink.cc
 )
 
 target_include_directories(utils_lib INTERFACE ..)

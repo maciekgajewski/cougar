@@ -3,6 +3,8 @@
 #include "function.hh"
 #include "statement.hh"
 
+#include "utils/text_sink.hh"
+
 namespace Cougar::Ast {
 
 using namespace Utils;
@@ -43,6 +45,11 @@ void Module::add(FunctionDeclaration *fun) {
 
 void ModuleStatement::dump(int indent) const {
   std::visit([&](const Node *n) { n->dump(indent); }, mData);
+}
+
+void Module::generateInterface(std::string_view path) const {
+  TextSink sink(path);
+  sink.print("Dupa!\n");
 }
 
 } // namespace Cougar::Ast

@@ -52,6 +52,8 @@ public:
       return {};
   }
 
+  void generateInterface(std::string_view path) const;
+
 private:
   void doDump(int indent = 0) const override;
 

@@ -1,0 +1,5 @@
+module std;
+
+public function int32 print(int32 a) {
+  return 0;
+}
